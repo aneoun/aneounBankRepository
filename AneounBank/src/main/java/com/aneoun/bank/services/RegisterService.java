@@ -1,7 +1,6 @@
 
 package com.aneoun.bank.services;
 
-import java.util.Date;
 import java.util.List;
 
 import javax.transaction.Transactional;
@@ -9,7 +8,7 @@ import javax.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.aneoun.bank.domain.RegisterImpl;
+import com.aneoun.bank.domain.Register;
 import com.aneoun.bank.domain.User;
 import com.aneoun.bank.repositories.RegisterRepository;
 
@@ -30,56 +29,69 @@ public class RegisterService {
 
 	//CRUD-------------------------------------------------------------------
 
-	public RegisterImpl create() {
-		final RegisterImpl registerImpl = new RegisterImpl();
-
-		registerImpl.setMoment(new Date(System.currentTimeMillis() - 1000));
-		registerImpl.setUser(this.userService.findUser());
-
-		return registerImpl;
-	}
-
-	public List<RegisterImpl> findAll() {
+	public List<Register> findAll() {
 		return this.registerRepository.findAll();
 	}
 
-	public RegisterImpl save(final RegisterImpl registerImpl) {
-		RegisterImpl saved = null;
+	public Register save(final Register register) {
 
-		if (registerImpl != null) {
-			saved = this.registerRepository.save(registerImpl);
-			this.updateBalance(saved);
-		}
+		register.setUser(this.updateBalance(register));
+		final Register saved = this.registerRepository.save(register);
 
 		return saved;
 	}
 
-	public void delete(final RegisterImpl registerImpl) {
-		this.registerRepository.delete(registerImpl);
+	public void delete(final Register register) {
+		this.updateDeleteBalance(register);
+		this.registerRepository.delete(register);
 	}
 
-	public RegisterImpl findOne(final Integer registerId) {
-		RegisterImpl impl = null;
-		for (final RegisterImpl registerImpl : this.findAll())
+	public Register findOne(final Integer registerId) {
+		Register register = null;
+		for (final Register registerImpl : this.findAll())
 			if (registerImpl.getId() == registerId) {
-				impl = registerImpl;
+				register = registerImpl;
 				break;
 			}
-		return impl;
+		return register;
 	}
 	//Other---------------------------------------------------------------------------
 
-	public void updateBalance(final RegisterImpl registerImpl) {
-		final User user = registerImpl.getUser();
+	public User updateBalance(final Register register) {
+		final User user = this.userService.findUser();
 		double balance = 0.0;
 
-		if (registerImpl.getStatus() == "INCOME")
-			balance = registerImpl.incomming(registerImpl.getAmmount());
-		else
-			balance = registerImpl.outcomming(registerImpl.getAmmount());
+		if (register.getStatus().equals("OUTCOME"))
+			if (register.getAmount() <= user.getBalance())
+				balance = this.outcomming(user.getBalance(), register.getAmount());
+
+			else
+				balance = this.incomming(user.getBalance(), register.getAmount());
+
+		user.setBalance(balance);
+		return this.userService.save(user);
+	}
+
+	public void updateDeleteBalance(final Register register) {
+		final User user = this.userService.findUser();
+		double balance = 0.0;
+
+		if (register.getAmount() <= user.getBalance())
+			if (register.getStatus().equals("OUTCOME"))
+				balance = this.incomming(user.getBalance(), register.getAmount());
+			else
+				balance = this.outcomming(user.getBalance(), register.getAmount());
 
 		user.setBalance(balance);
 		this.userService.save(user);
+	}
+
+	private double incomming(final double balance, final double amount) {
+		return balance + amount;
+	}
+
+	private double outcomming(final double balance, final double amount) {
+		return balance - amount;
 	}
 
 }
