@@ -1,7 +1,9 @@
 
 package com.aneoun.bank.services;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import javax.transaction.Transactional;
 
@@ -11,6 +13,8 @@ import org.springframework.stereotype.Service;
 import com.aneoun.bank.domain.Register;
 import com.aneoun.bank.domain.User;
 import com.aneoun.bank.repositories.RegisterRepository;
+import com.google.firebase.database.DatabaseReference;
+import com.google.firebase.database.FirebaseDatabase;
 
 @Service
 @Transactional
@@ -37,6 +41,7 @@ public class RegisterService {
 
 		register.setUser(this.updateBalance(register));
 		final Register saved = this.registerRepository.save(register);
+		this.saveRegisterFirebase(saved);
 
 		return saved;
 	}
@@ -92,6 +97,20 @@ public class RegisterService {
 
 	private double outcomming(final double balance, final double amount) {
 		return balance - amount;
+	}
+
+	//Firebase---------------------------------------------------------------------
+
+	private void saveRegisterFirebase(final Register register) {
+		final FirebaseDatabase database = FirebaseDatabase.getInstance();
+		final DatabaseReference ref = database.getReference("server/saving-data/fireblog");
+
+		final DatabaseReference registersRef = ref.child("registers");
+
+		final Map<String, Register> registers = new HashMap<>();
+		registers.put(String.valueOf(register.getId()), new Register(register.getAmount(), register.getMoment(), register.getStatus(), register.getUser()));
+
+		registersRef.setValueAsync(registers);
 	}
 
 }

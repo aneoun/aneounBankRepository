@@ -22,6 +22,18 @@ import org.springframework.format.annotation.DateTimeFormat;
 @Access(AccessType.PROPERTY)
 public class Register extends DomainEntity {
 
+	public Register() {
+		// TODO Auto-generated constructor stub
+	}
+
+	public Register(final double amount, final Date moment, final String status, final User user) {
+		this.amount = amount;
+		this.moment = moment;
+		this.status = status;
+		this.user = user;
+	}
+
+
 	//Atributtes---------------------------------------------------
 
 	private double	amount;

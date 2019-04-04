@@ -13,6 +13,27 @@ import org.hibernate.validator.constraints.Length;
 @Access(AccessType.PROPERTY)
 public class User extends DomainEntity {
 
+	public User() {
+		// TODO Auto-generated constructor stub
+	}
+
+	public User(final User user) {
+		final User userU = new User();
+		userU.setBalance(user.getBalance());
+		userU.setId(user.getId());
+		userU.setName(user.getName());
+		userU.setSurname(user.getSurname());
+		userU.setVersion(user.getVersion());
+	}
+
+	public User(final String name, final String surname, final double balance) {
+		this.name = name;
+		this.surname = surname;
+		this.balance = balance;
+
+	}
+
+
 	//Aributtes-----------------------------------------
 
 	private String	name;
